@@ -1,0 +1,7 @@
+# Ignore all files and folders in this directory
+*
+
+# Except for these files and folders
+!.gitignore
+!*.dll
+!*.exe
