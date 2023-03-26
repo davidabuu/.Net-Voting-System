@@ -26,6 +26,22 @@ namespace DotnetAPI.Data
             IDbConnection connection = Connection();
             return connection.QuerySingle<T>(sqlCommand);
         }
+        public bool ExecuteSqlWithParameters(string sqlCommand, DynamicParameters parameters)
+        {
+            IDbConnection connection = Connection();
+            return connection.Execute(sqlCommand, parameters) > 0;
+        }
+        public IEnumerable<T> LoadDataWithParameters<T>(string sqlCommand, DynamicParameters parameters)
+        {
+            IDbConnection connection = Connection();
+            return connection.Query<T>(sqlCommand, parameters);
+        }
+
+        public T LoadDataSingleWithParameters<T>(string sqlCommand, DynamicParameters parameters)
+        {
+            IDbConnection connection = Connection();
+            return connection.QuerySingle<T>(sqlCommand, parameters);
+        }
 
     }
 }

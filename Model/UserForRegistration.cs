@@ -12,6 +12,7 @@ namespace DotnetAPI.Model
 
         public string ConfirmPassword { get; set; } = "";
 
+
         public int Verified { get; set; }
         public int VotedForPresident { get; set; }
         public int VotedForVicePresident { get; set; }
