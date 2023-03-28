@@ -7,7 +7,6 @@ using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.Model;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DotnetAPI.Helpers
@@ -71,7 +70,7 @@ namespace DotnetAPI.Helpers
 
         }
 
-        public bool SetPassword(UserLogin userForSetPassword)
+        public bool SetPassword(UserLogin userLogin)
         {
 
             byte[] passwordSalt = new byte[128 / 8];
@@ -80,9 +79,18 @@ namespace DotnetAPI.Helpers
                 rng.GetNonZeroBytes(passwordSalt);
             }
 
-            byte[] passwordHash = GetPasswordHash(userForSetPassword.Password, passwordSalt);
-
-            return true;
+            byte[] passwordHash = GetPasswordHash(userLogin.Password, passwordSalt);
+            Console.WriteLine(passwordHash);
+            Console.WriteLine(passwordSalt);
+            string sql = @"EXEC VotingSchema.spLogin_Upsert
+            @EmailAddress = @EmailAddressParam,
+            @PasswordHash = @PasswordHashParam,
+            @PasswordSalt = @PasswordSaltParam";
+            DynamicParameters sqlParamters = new DynamicParameters();
+            sqlParamters.Add("@EmailAddressParam", userLogin.EmailAddress, DbType.String);
+            sqlParamters.Add("@PasswordHashParam", passwordHash, DbType.Binary);
+            sqlParamters.Add("@PasswordSaltParam", passwordSalt, DbType.Binary);
+            return _dapper.ExecuteSqlWithParameters(sql, sqlParamters);
 
         }
 
