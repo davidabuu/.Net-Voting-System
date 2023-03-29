@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using DotnetAPI.Data;
 using DotnetAPI.Helpers;
@@ -25,7 +26,7 @@ public class AuthController : ControllerBase
         if (userForRegistration.Password == userForRegistration.ConfirmPassword)
         {
             string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingSchema.UserLogin WHERE EmailAddress = '" + userForRegistration.EmailAddress + "'";
-         IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
+            IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
             if (existingUsers.Count() == 0)
             {
                 UserLogin userLogin = new UserLogin()
@@ -53,5 +54,31 @@ public class AuthController : ControllerBase
             throw new Exception("User Already Exists");
         }
         throw new Exception("Password Do not Match");
+    }
+    [HttpPost("Login")]
+    public IActionResult Login(UserLogin userLogin)
+    {
+        string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingSchema.UserLogin WHERE EmailAddress = '" + userLogin.EmailAddress + "'";
+        string sqlCommand = @"EXEC VotingSchema.spLoginConfirmation
+        @EmailAddress = @EmailAddressParam";
+        DynamicParameters sqlParameter = new DynamicParameters();
+        sqlParameter.Add("@EmailAddressParam", userLogin.EmailAddress, DbType.String);
+        IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
+        if (existingUsers.Count() != 0)
+        {
+            UserForLoginConfirmation userForConfirmation = _dapper
+                           .LoadDataSingleWithParameters<UserForLoginConfirmation>(sqlCommand, sqlParameter);
+            Console.WriteLine(userForConfirmation.PasswordHash);
+            byte[] passwordHash = _authHelper.GetPasswordHash(userLogin.Password, userForConfirmation.PasswordSalt);
+            for (int index = 0; index < passwordHash.Length; index++)
+            {
+                if (passwordHash[index] != userForConfirmation.PasswordHash[index])
+                {
+                    return StatusCode(401, "Incorrect password!");
+                }
+                return Ok();
+            }
+        }
+        return StatusCode(404, "User Do Not Exists");
     }
 }
