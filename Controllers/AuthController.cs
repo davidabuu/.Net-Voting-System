@@ -55,6 +55,21 @@ public class AuthController : ControllerBase
         }
         throw new Exception("Password Do not Match");
     }
+    [HttpPost("ResetPassword")]
+    public IActionResult ResetPassword(UserLogin resetPassword)
+    {
+        string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingSchema.UserLogin WHERE EmailAddress = '" + resetPassword.EmailAddress + "'";
+        IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
+        if (existingUsers.Count() != 0)
+        {
+            if (_authHelper.SetPassword(resetPassword))
+            {
+                return Ok();
+            }
+
+        }
+        return StatusCode(404, "User Do not exists");
+    }
     [HttpPost("Login")]
     public IActionResult Login(UserLogin userLogin)
     {
@@ -63,7 +78,9 @@ public class AuthController : ControllerBase
         @EmailAddress = @EmailAddressParam";
         DynamicParameters sqlParameter = new DynamicParameters();
         sqlParameter.Add("@EmailAddressParam", userLogin.EmailAddress, DbType.String);
-        IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
+        IEnumerable<string> existingUsers = _dapper.LoadData<string>
+        (sqlCheckUserExists);
+        Console.WriteLine(sqlCommand);
         if (existingUsers.Count() != 0)
         {
             UserForLoginConfirmation userForConfirmation = _dapper
@@ -76,8 +93,17 @@ public class AuthController : ControllerBase
                 {
                     return StatusCode(401, "Incorrect password!");
                 }
-                return Ok();
+                string userIdSql = @"
+                SELECT UserId FROM VotingSchema.UserLogin WHERE EmailAddress = '" +
+              userLogin.EmailAddress + "'";
+
+                int userId = _dapper.LoadSingleData<int>(userIdSql);
+
+                return Ok(new Dictionary<string, string> {
+                {"token", _authHelper.CreateToken(userId)}
+            });
             }
+
         }
         return StatusCode(404, "User Do Not Exists");
     }
