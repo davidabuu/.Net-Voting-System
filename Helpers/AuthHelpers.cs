@@ -95,5 +95,30 @@ namespace DotnetAPI.Helpers
         }
 
 
+        public bool SetPasswordAdmin(AdminLogin adminLogin)
+        {
+
+            byte[] passwordSalt = new byte[128 / 8];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetNonZeroBytes(passwordSalt);
+            }
+
+            byte[] passwordHash = GetPasswordHash(adminLogin.Password, passwordSalt);
+            Console.WriteLine(passwordHash);
+            Console.WriteLine(passwordSalt);
+            string sql = @"EXEC VotingSchema.spAdminLogin_Upsert
+            @EmailAddress = @EmailAddressParam,
+            @PasswordHash = @PasswordHashParam,
+            @PasswordSalt = @PasswordSaltParam";
+            DynamicParameters sqlParamters = new DynamicParameters();
+            sqlParamters.Add("@EmailAddressParam", adminLogin.EmailAddress, DbType.String);
+            sqlParamters.Add("@PasswordHashParam", passwordHash, DbType.Binary);
+            sqlParamters.Add("@PasswordSaltParam", passwordSalt, DbType.Binary);
+            return _dapper.ExecuteSqlWithParameters(sql, sqlParamters);
+
+        }
+
+
     }
 }
