@@ -79,7 +79,7 @@ public class AdminAuthController : ControllerBase
                     return StatusCode(401, "Incorrect password!");
                 }
                 string adminIdSql = @"
-                SELECT AdminId FROM VotingSchema.AdminLogin WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
+                SELECT AdminId FROM VotingSchemaApp.AdminLogin WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
                 int adminId = _dapper.LoadSingleData<int>(adminIdSql);
                 return Ok(new Dictionary<string, string> {
                 {"token", _authHelper.CreateToken(adminId)}
