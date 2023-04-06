@@ -25,7 +25,7 @@ public class UserAuthController : ControllerBase
     {
         if (userRegister.Password == userRegister.ConfirmPassword)
         {
-            string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingSchemaApp.UserLogin WHERE EmailAddress = '" + userRegister.EmailAddress + "'";
+            string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingAppSchema.UserLogin WHERE EmailAddress = '" + userRegister.EmailAddress + "'";
             IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
             if (existingUsers.Count() == 0)
             {
@@ -36,7 +36,7 @@ public class UserAuthController : ControllerBase
                 };
                 if (_authHelper.SetPassword(userLogin))
                 {
-                    string sqlCommand = @"EXEC VotingSchemaApp.spRegisterAndLoginUser
+                    string sqlCommand = @"EXEC spRegisterAndLoginUser
                     @FirstName = @FirstNameParam,
                     @LastName = @LastNameParam,
                     @EmailAddress = @EmailAddressParam";
@@ -58,13 +58,13 @@ public class UserAuthController : ControllerBase
     [HttpPost("UserLogin")]
     public IActionResult UserLogin(UserLogin userLogin)
     {
-        string sqlCheckAdminExists = @"SELECT EmailAddress FROM VotingSchemaApp.UserLogin WHERE EmailAddress = '" + userLogin.EmailAddress + "'";
-        string sqlCommand = @"EXEC VotingSchemaApp.spUserLoginConfirmation
+        string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingAppSchema.UserLogin WHERE EmailAddress = '" + userLogin.EmailAddress + "'";
+        string sqlCommand = @"EXEC VotingAppSchema.spUserLoginConfirmation
         @EmailAddress = @EmailAddressParam";
         DynamicParameters sqlParameter = new DynamicParameters();
         sqlParameter.Add("@EmailAddressParam", userLogin.EmailAddress, DbType.String);
         IEnumerable<string> existingUsers = _dapper.LoadData<string>
-        (sqlCheckAdminExists);
+        (sqlCheckUserExists);
         Console.WriteLine(sqlCommand);
         if (existingUsers.Count() != 0)
         {
@@ -79,7 +79,7 @@ public class UserAuthController : ControllerBase
                     return StatusCode(401, "Incorrect password!");
                 }
                 string userIdSql = @"
-                SELECT UserId FROM VotingSchemaApp.UserLogin WHERE EmailAddress = '" + userLogin.EmailAddress + "'";
+                SELECT UserId FROM VotingAppSchema.UserLogin WHERE EmailAddress = '" + userLogin.EmailAddress + "'";
                 int userId = _dapper.LoadSingleData<int>(userIdSql);
                 return Ok(new Dictionary<string, string> {
                 {"token", _authHelper.CreateToken(userId)}
@@ -89,6 +89,7 @@ public class UserAuthController : ControllerBase
         }
         return StatusCode(404, "User Do Not Exists");
     }
+     [HttpPost("ResetPasswordUser")]
     public IActionResult ResetPassword(UserLogin userLoginReset)
     {
         if (_authHelper.SetPassword(userLoginReset))

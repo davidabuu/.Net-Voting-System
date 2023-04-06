@@ -1,1 +1,22 @@
 *.bin
+
+
+//         if (_authHelper.SetPasswordAdmin(adminLogin))
+        //         {
+        //             string sqlCommand = @"EXEC spRegisterAndLoginAdmin
+        //             @FirstName = @FirstNameParam,
+        //             @LastName = @LastNameParam,
+        //             @EmailAddress = @EmailAddressParam";
+        //             DynamicParameters sqlParameters = new DynamicParameters();
+        //             sqlParameters.Add("@FirstNameParam", adminRegister.FirstName);
+        //             sqlParameters.Add("@LastNameParam", adminRegister.LastName);
+        //             sqlParameters.Add("@EmailAddressParam", adminRegister.EmailAddress);
+        //             if (_dapper.ExecuteSqlWithParameters(sqlCommand, sqlParameters))
+        //             {
+        //                 return Ok();
+        //             }
+        //         }
+        //     }
+        //     throw new Exception("Admin Already Exists");
+        // }
+        // throw new Exception("Password Do not Match");

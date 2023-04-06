@@ -107,7 +107,7 @@ namespace DotnetAPI.Helpers
             byte[] passwordHash = GetPasswordHash(adminLogin.Password, passwordSalt);
             Console.WriteLine(passwordHash);
             Console.WriteLine(passwordSalt);
-            string sql = @"EXEC VotingSchema.spAdminLogin_Upsert
+            string sql = @"EXEC spRegisterAndLoginAdmin
             @EmailAddress = @EmailAddressParam,
             @PasswordHash = @PasswordHashParam,
             @PasswordSalt = @PasswordSaltParam";
