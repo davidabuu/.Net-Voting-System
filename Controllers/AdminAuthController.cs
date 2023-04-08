@@ -26,58 +26,65 @@ public class AdminAuthController : ControllerBase
 
         if (adminRegister.Password == adminRegister.ConfirmPassword)
         {
-            string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingAppSchema.AdminLogin WHERE EmailAddress = '" + adminRegister.EmailAddress + "'";
+            string sqlCheckUserExists = @"SELECT EmailAddress FROM VotingApp.AdminRegistration WHERE EmailAddress = '" + adminRegister.EmailAddress + "'";
+            Console.WriteLine(sqlCheckUserExists);
             IEnumerable<string> existingUsers = _dapper.LoadData<string>(sqlCheckUserExists);
+            DynamicParameters sqlParameters = new DynamicParameters();
             if (existingUsers.Count() == 0)
             {
-                AdminLogin adminLogin = new AdminLogin()
+                AdminRegister newAdminRegister = new AdminRegister()
                 {
+                    FirstName = adminRegister.FirstName,
+                    LastName = adminRegister.LastName,
                     EmailAddress = adminRegister.EmailAddress,
                     Password = adminRegister.Password
                 };
-                if (_authHelper.SetPasswordAdmin(adminLogin))
+                if (_authHelper.SetPasswordAdmin(newAdminRegister))
                 {
                     return Ok();
+
                 }
+                throw new Exception("Failed To Add Admin");
+
             }
-            throw new Exception("User Already Exists");
+            throw new Exception("Admin Already Exists");
         }
         throw new Exception("Password Do not Match");
     }
-    // [HttpPost("AdminLogin")]
-    // public IActionResult AdminLogin(AdminLogin adminLogin)
-    // {
-    //     string sqlCheckAdminExists = @"SELECT EmailAddress FROM VotingAppSchema.AdminLogin WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
-    //     string sqlCommand = @"EXEC VotingAppSchema.spAdminLoginConfirmation
-    //     @EmailAddress = @EmailAddressParam";
-    //     DynamicParameters sqlParameter = new DynamicParameters();
-    //     sqlParameter.Add("@EmailAddressParam", adminLogin.EmailAddress, DbType.String);
-    //     IEnumerable<string> existingUsers = _dapper.LoadData<string>
-    //     (sqlCheckAdminExists);
-    //     Console.WriteLine(sqlCommand);
-    //     if (existingUsers.Count() != 0)
-    //     {
-    //         AdminForLoginConfirmation userForConfirmation = _dapper
-    //                        .LoadDataSingleWithParameters<AdminForLoginConfirmation>(sqlCommand, sqlParameter);
-    //         Console.WriteLine(userForConfirmation.PasswordHash);
-    //         byte[] passwordHash = _authHelper.GetPasswordHash(adminLogin.Password, userForConfirmation.PasswordSalt);
-    //         for (int index = 0; index < passwordHash.Length; index++)
-    //         {
-    //             if (passwordHash[index] != userForConfirmation.PasswordHash[index])
-    //             {
-    //                 return StatusCode(401, "Incorrect password!");
-    //             }
-    //             string adminIdSql = @"
-    //             SELECT AdminId FROM VotingAppSchema.AdminLogin WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
-    //             int adminId = _dapper.LoadSingleData<int>(adminIdSql);
-    //             return Ok(new Dictionary<string, string> {
-    //             {"token", _authHelper.CreateToken(adminId)}
-    //         });
+    [HttpPost("AdminLogin")]
+    public IActionResult AdminLogin(AdminLogin adminLogin)
+    {
+        string sqlCheckAdminExists = @"SELECT EmailAddress FROM VotingApp.AdminRegistration  WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
+        string sqlCommand = @"EXEC spAdminLoginConfirmation
+        @EmailAddress = @EmailAddressParam";
+        DynamicParameters sqlParameter = new DynamicParameters();
+        sqlParameter.Add("@EmailAddressParam", adminLogin.EmailAddress, DbType.String);
+        IEnumerable<string> existingUsers = _dapper.LoadData<string>
+        (sqlCheckAdminExists);
+        Console.WriteLine(sqlCommand);
+        if (existingUsers.Count() != 0)
+        {
+            AdminForLoginConfirmation adminForConfirmation = _dapper
+                           .LoadDataSingleWithParameters<AdminForLoginConfirmation>(sqlCommand, sqlParameter);
+            Console.WriteLine(adminForConfirmation.PasswordHash);
+            byte[] passwordHash = _authHelper.GetPasswordHash(adminLogin.Password, adminForConfirmation.PasswordSalt);
+            for (int index = 0; index < passwordHash.Length; index++)
+            {
+                if (passwordHash[index] != adminForConfirmation.PasswordHash[index])
+                {
+                    return StatusCode(401, "Incorrect password!");
+                }
+                string adminIdSql = @"
+                SELECT AdminId FROM VotingApp.AdminRegistration  WHERE EmailAddress = '" + adminLogin.EmailAddress + "'";
+                int adminId = _dapper.LoadSingleData<int>(adminIdSql);
+                return Ok(new Dictionary<string, string> {
+                {"token", _authHelper.CreateToken(adminId)}
+            });
 
-    //         }
-    //     }
-    //     return StatusCode(404, "Admin Do Not Exists");
-    // }
+            }
+        }
+        return StatusCode(404, "Admin Do Not Exists");
+    }
     // [HttpPost("ResetPasswordAdmin")]
     // public IActionResult ResetPasswordAdmin(AdminLogin adminLoginReset)
     // {

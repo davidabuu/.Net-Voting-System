@@ -70,7 +70,7 @@ namespace DotnetAPI.Helpers
 
         }
 
-        public bool SetPassword(UserLogin userLogin)
+        public bool SetPassword(UserForRegistration userLogin)
         {
 
             byte[] passwordSalt = new byte[128 / 8];
@@ -80,22 +80,25 @@ namespace DotnetAPI.Helpers
             }
 
             byte[] passwordHash = GetPasswordHash(userLogin.Password, passwordSalt);
-            Console.WriteLine(passwordHash);
-            Console.WriteLine(passwordSalt);
-            string sql = @"EXEC VotingSchema.spLogin_Upsert
+           string sql = @"EXEC spRegisterUser
+            @FirstName = @FirstNameParam,
+            @LastName = @LastNameParam,
             @EmailAddress = @EmailAddressParam,
             @PasswordHash = @PasswordHashParam,
             @PasswordSalt = @PasswordSaltParam";
             DynamicParameters sqlParamters = new DynamicParameters();
+            sqlParamters.Add("@FirstNameParam", userLogin.FirstName, DbType.String);
+            sqlParamters.Add("@LastNameParam", userLogin.LastName, DbType.String);
             sqlParamters.Add("@EmailAddressParam", userLogin.EmailAddress, DbType.String);
             sqlParamters.Add("@PasswordHashParam", passwordHash, DbType.Binary);
             sqlParamters.Add("@PasswordSaltParam", passwordSalt, DbType.Binary);
+            Console.WriteLine(sql);
             return _dapper.ExecuteSqlWithParameters(sql, sqlParamters);
 
         }
 
 
-        public bool SetPasswordAdmin(AdminLogin adminLogin)
+        public bool SetPasswordAdmin(AdminRegister adminRegister)
         {
 
             byte[] passwordSalt = new byte[128 / 8];
@@ -104,17 +107,20 @@ namespace DotnetAPI.Helpers
                 rng.GetNonZeroBytes(passwordSalt);
             }
 
-            byte[] passwordHash = GetPasswordHash(adminLogin.Password, passwordSalt);
-            Console.WriteLine(passwordHash);
-            Console.WriteLine(passwordSalt);
-            string sql = @"EXEC spRegisterAndLoginAdmin
+            byte[] passwordHash = GetPasswordHash(adminRegister.Password, passwordSalt);
+            string sql = @"EXEC spRegister
+            @FirstName = @FirstNameParam,
+            @LastName = @LastNameParam,
             @EmailAddress = @EmailAddressParam,
             @PasswordHash = @PasswordHashParam,
             @PasswordSalt = @PasswordSaltParam";
             DynamicParameters sqlParamters = new DynamicParameters();
-            sqlParamters.Add("@EmailAddressParam", adminLogin.EmailAddress, DbType.String);
+            sqlParamters.Add("@FirstNameParam", adminRegister.FirstName, DbType.String);
+            sqlParamters.Add("@LastNameParam", adminRegister.LastName, DbType.String);
+            sqlParamters.Add("@EmailAddressParam", adminRegister.EmailAddress, DbType.String);
             sqlParamters.Add("@PasswordHashParam", passwordHash, DbType.Binary);
             sqlParamters.Add("@PasswordSaltParam", passwordSalt, DbType.Binary);
+            Console.WriteLine(sql);
             return _dapper.ExecuteSqlWithParameters(sql, sqlParamters);
 
         }
